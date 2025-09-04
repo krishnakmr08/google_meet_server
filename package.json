@@ -7,11 +7,11 @@
   "type": "commonjs",
   "main": "app.js",
   "scripts": {
-    "start" : "nodemon app.js",
+    "start": "nodemon app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "env": "^0.0.2",
+    "dotenv": "^17.2.2",
     "express": "^4.21.2",
     "express-async-errors": "^3.1.1",
     "http-status-codes": "^2.3.0",

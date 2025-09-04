@@ -1,25 +1,32 @@
 require("dotenv").config();
-const connectDB = require("./config/connect");
+require("express-async-errors");
 const express = require("express");
 const http = require("http");
-const { Server } = require("socket.io");
+const socketIo = require("socket.io");
+import notFoundMiddleware from "./middleware/not-found";
+const connectDB = require("./config/connect");
+import errorHandlerMiddleware from "./middleware/error-handler";
+import webRTCSignalingSocket from "./controllers/sockets";
+
+// Import socket handler
+
 const Session = require("./models/session");
+
 const app = express();
+app.use(express.json());
 
 const server = http.createServer(app);
 
-const io = new Server(server, {
+const io = new socketIo(server, {
   cors: {
     origin: "*",
   },
 });
 
-app.use(express.json());
-
 //routes
 app.post("/create-session", async (req, res) => {
   try {
-    const sessionId = Math.random().toString().substr(2, 9);
+    const sessionId = Math.random().toString(36).slice(2, 11);
     const session = new Session({ sessionId, participants: [] });
     await session.save();
     res.json({ sessionId });
@@ -37,6 +44,18 @@ app.get("/is-alive", async (req, res) => {
     console.log(error);
   }
 });
+
+app.use((req, res, next) => {
+  req.io = io;
+  return next();
+});
+
+// Intialize the WebSocket handling logic
+webRTCSignalingSocket(io);
+
+//Middleware
+app.use(notFoundMiddleware);
+app.use(errorHandlerMiddleware);
 
 const start = async () => {
   try {
